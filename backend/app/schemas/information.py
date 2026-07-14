@@ -32,6 +32,11 @@ class InformationListResponse(BaseModel):
     items: list[InformationRead]
 
 
+class SourceListResponse(BaseModel):
+    total: int
+    items: list[SourceRead]
+
+
 class CrawlResponse(BaseModel):
     source: str
     fetched: int

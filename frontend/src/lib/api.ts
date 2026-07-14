@@ -51,6 +51,26 @@ export type OpportunityListResponse = {
   items: OpportunityItem[];
 };
 
+export type StatsResponse = {
+  sources: number;
+  information: number;
+  analyses: number;
+  opportunities: number;
+  pending_analysis: number;
+  pending_opportunities: number;
+};
+
+export type TrendItem = {
+  topic: string;
+  count: number;
+  avg_relevance: number;
+};
+
+export type TrendListResponse = {
+  total: number;
+  items: TrendItem[];
+};
+
 export async function fetchInformation(): Promise<InformationListResponse> {
   const response = await fetch(`${API_BASE}/api/information?limit=10`, {
     cache: "no-store",
@@ -84,6 +104,22 @@ export async function fetchOpportunities(): Promise<OpportunityListResponse> {
     throw new Error("Failed to fetch opportunities");
   }
 
+  return response.json();
+}
+
+export async function fetchStats(): Promise<StatsResponse> {
+  const response = await fetch(`${API_BASE}/api/stats`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Failed to fetch stats");
+  }
+  return response.json();
+}
+
+export async function fetchTrends(): Promise<TrendListResponse> {
+  const response = await fetch(`${API_BASE}/api/trends?limit=8`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Failed to fetch trends");
+  }
   return response.json();
 }
 

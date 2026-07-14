@@ -13,9 +13,11 @@ router = APIRouter(prefix="/api", tags=["information"])
 def get_information(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    source_id: int | None = Query(None, ge=1),
+    q: str | None = Query(None, min_length=1, max_length=200),
     db: Session = Depends(get_db),
 ) -> InformationListResponse:
-    items, total = list_information(db, skip=skip, limit=limit)
+    items, total = list_information(db, skip=skip, limit=limit, source_id=source_id, keyword=q)
     return InformationListResponse(
         total=total,
         items=[InformationRead.model_validate(item) for item in items],

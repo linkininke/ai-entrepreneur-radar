@@ -68,8 +68,22 @@ class AnalysisService:
         return results
 
 
-def list_analyses(db: Session, skip: int = 0, limit: int = 20) -> tuple[list[Analysis], int]:
-    query = db.query(Analysis).order_by(Analysis.analyzed_at.desc())
+def list_analyses(
+    db: Session,
+    skip: int = 0,
+    limit: int = 20,
+    commercial_potential: str | None = None,
+    min_relevance: float | None = None,
+) -> tuple[list[Analysis], int]:
+    query = db.query(Analysis)
+
+    if commercial_potential:
+        query = query.filter(Analysis.commercial_potential == commercial_potential)
+
+    if min_relevance is not None:
+        query = query.filter(Analysis.relevance_score >= min_relevance)
+
+    query = query.order_by(Analysis.analyzed_at.desc())
     total = query.count()
     items = query.offset(skip).limit(limit).all()
     return items, total

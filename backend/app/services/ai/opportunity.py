@@ -81,8 +81,18 @@ class OpportunityService:
         return results
 
 
-def list_opportunities(db: Session, skip: int = 0, limit: int = 20) -> tuple[list[Opportunity], int]:
-    query = db.query(Opportunity).order_by(Opportunity.generated_at.desc())
+def list_opportunities(
+    db: Session,
+    skip: int = 0,
+    limit: int = 20,
+    min_confidence: float | None = None,
+) -> tuple[list[Opportunity], int]:
+    query = db.query(Opportunity)
+
+    if min_confidence is not None:
+        query = query.filter(Opportunity.confidence_score >= min_confidence)
+
+    query = query.order_by(Opportunity.generated_at.desc())
     total = query.count()
     items = query.offset(skip).limit(limit).all()
     return items, total

@@ -1,20 +1,33 @@
-import { fetchAnalysis, fetchInformation, fetchOpportunities } from "@/lib/api";
+import {
+  fetchAnalysis,
+  fetchInformation,
+  fetchOpportunities,
+  fetchStats,
+  fetchTrends,
+} from "@/lib/api";
 
 export default async function Home() {
   let items: Awaited<ReturnType<typeof fetchInformation>>["items"] = [];
   let analyses: Awaited<ReturnType<typeof fetchAnalysis>>["items"] = [];
   let opportunities: Awaited<ReturnType<typeof fetchOpportunities>>["items"] = [];
+  let stats: Awaited<ReturnType<typeof fetchStats>> | null = null;
+  let trends: Awaited<ReturnType<typeof fetchTrends>>["items"] = [];
   let error = "";
 
   try {
-    const [informationData, analysisData, opportunityData] = await Promise.all([
-      fetchInformation(),
-      fetchAnalysis(),
-      fetchOpportunities(),
-    ]);
+    const [informationData, analysisData, opportunityData, statsData, trendsData] =
+      await Promise.all([
+        fetchInformation(),
+        fetchAnalysis(),
+        fetchOpportunities(),
+        fetchStats(),
+        fetchTrends(),
+      ]);
     items = informationData.items;
     analyses = analysisData.items;
     opportunities = opportunityData.items;
+    stats = statsData;
+    trends = trendsData.items;
   } catch {
     error = "Backend API is not reachable yet.";
   }
@@ -27,6 +40,40 @@ export default async function Home() {
         <h1 className="text-3xl font-bold tracking-tight">AI Entrepreneur Radar</h1>
         <p className="text-lg text-gray-600">System initialized successfully.</p>
       </header>
+
+      {stats ? (
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[
+            ["Information", stats.information],
+            ["Analyses", stats.analyses],
+            ["Opportunities", stats.opportunities],
+            ["Pending Analysis", stats.pending_analysis],
+            ["Pending Opportunities", stats.pending_opportunities],
+            ["Sources", stats.sources],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-lg border border-gray-200 p-3 text-center">
+              <p className="text-xs text-gray-500">{label}</p>
+              <p className="text-xl font-semibold">{value}</p>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
+      {trends.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">Trending Topics</h2>
+          <div className="flex flex-wrap gap-2">
+            {trends.map((trend) => (
+              <span
+                key={trend.topic}
+                className="rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-800"
+              >
+                {trend.topic} ({trend.count})
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Startup Opportunities</h2>

@@ -13,9 +13,10 @@ router = APIRouter(prefix="/api", tags=["opportunities"])
 def get_opportunities(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    min_confidence: float | None = Query(None, ge=0, le=100),
     db: Session = Depends(get_db),
 ) -> OpportunityListResponse:
-    items, total = list_opportunities(db, skip=skip, limit=limit)
+    items, total = list_opportunities(db, skip=skip, limit=limit, min_confidence=min_confidence)
     return OpportunityListResponse(
         total=total,
         items=[OpportunityRead.model_validate(item) for item in items],
@@ -30,6 +31,8 @@ def generate_opportunities_batch(
     service = OpportunityService()
     try:
         items = service.generate_batch(db, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     except LLMServiceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return BatchOpportunityResponse(

@@ -13,9 +13,17 @@ router = APIRouter(prefix="/api", tags=["analysis"])
 def get_analysis(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    commercial_potential: str | None = Query(None, pattern="^(low|medium|high|unknown)$"),
+    min_relevance: float | None = Query(None, ge=0, le=100),
     db: Session = Depends(get_db),
 ) -> AnalysisListResponse:
-    items, total = list_analyses(db, skip=skip, limit=limit)
+    items, total = list_analyses(
+        db,
+        skip=skip,
+        limit=limit,
+        commercial_potential=commercial_potential,
+        min_relevance=min_relevance,
+    )
     return AnalysisListResponse(
         total=total,
         items=[AnalysisRead.model_validate(item) for item in items],
@@ -51,4 +59,3 @@ def analyze_single(
     except LLMServiceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return AnalysisRead.model_validate(analysis)
-
