@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import { useLocale } from "@/contexts/locale-context";
 import { searchItems, type SearchResultItem } from "@/lib/api";
 
 export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
+  const { t } = useLocale();
   const [query, setQuery] = useState(initialQuery);
   const [scope, setScope] = useState("all");
   const [results, setResults] = useState<SearchResultItem[]>([]);
@@ -23,7 +25,7 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
       setResults(data.items);
       setTotal(data.total);
     } catch {
-      setError("Search failed. Is the backend running?");
+      setError(t("search.error"));
       setResults([]);
       setTotal(0);
     } finally {
@@ -38,7 +40,7 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search information, analysis, opportunities..."
+          placeholder={t("search.placeholder")}
           className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none"
         />
         <select
@@ -46,24 +48,24 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
           onChange={(e) => setScope(e.target.value)}
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
         >
-          <option value="all">All</option>
-          <option value="information">Information</option>
-          <option value="analysis">Analysis</option>
-          <option value="opportunity">Opportunity</option>
+          <option value="all">{t("search.scopeAll")}</option>
+          <option value="information">{t("search.scopeInformation")}</option>
+          <option value="analysis">{t("search.scopeAnalysis")}</option>
+          <option value="opportunity">{t("search.scopeOpportunity")}</option>
         </select>
         <button
           type="submit"
           disabled={loading}
           className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
-          {loading ? "Searching..." : "Search"}
+          {loading ? t("search.searching") : t("search.button")}
         </button>
       </form>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {total > 0 ? (
-        <p className="text-sm text-gray-500">{total} result(s)</p>
+        <p className="text-sm text-gray-500">{t("search.results", { total })}</p>
       ) : null}
 
       <ul className="space-y-3">
@@ -74,7 +76,9 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
                 {item.type}
               </span>
               {item.score != null ? (
-                <span className="text-xs text-gray-500">score {item.score}</span>
+                <span className="text-xs text-gray-500">
+                  {t("search.score", { value: item.score })}
+                </span>
               ) : null}
             </div>
             <p className="mt-2 font-medium text-gray-900">{item.title}</p>

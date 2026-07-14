@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useLocale } from "@/contexts/locale-context";
 import {
   triggerAnalyzeBatch,
   triggerHackerNewsCrawl,
@@ -9,17 +10,28 @@ import {
 } from "@/lib/api";
 
 export function PipelineActions() {
+  const { t } = useLocale();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
 
-  async function run(action: string, fn: () => Promise<unknown>) {
-    setLoading(action);
+  async function run(actionKey: string, label: string, fn: () => Promise<unknown>) {
+    setLoading(actionKey);
     setMessage("");
     try {
       const result = await fn();
-      setMessage(`${action} completed: ${JSON.stringify(result)}`);
+      setMessage(
+        t("pipeline.completed", {
+          action: label,
+          result: JSON.stringify(result),
+        }),
+      );
     } catch (err) {
-      setMessage(`${action} failed: ${err instanceof Error ? err.message : "unknown error"}`);
+      setMessage(
+        t("pipeline.failed", {
+          action: label,
+          error: err instanceof Error ? err.message : "unknown error",
+        }),
+      );
     } finally {
       setLoading(null);
     }
@@ -27,31 +39,33 @@ export function PipelineActions() {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h3 className="font-medium text-gray-900">Pipeline Actions</h3>
+      <h3 className="font-medium text-gray-900">{t("pipeline.actions")}</h3>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
-          onClick={() => run("Crawl", () => triggerHackerNewsCrawl(10))}
+          onClick={() => run("crawl", t("pipeline.crawl"), () => triggerHackerNewsCrawl(10))}
           disabled={loading !== null}
           className="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          {loading === "Crawl" ? "..." : "Crawl HN"}
+          {loading === "crawl" ? "..." : t("pipeline.crawl")}
         </button>
         <button
-          onClick={() => run("Analyze", () => triggerAnalyzeBatch(5))}
+          onClick={() => run("analyze", t("pipeline.analyze"), () => triggerAnalyzeBatch(5))}
           disabled={loading !== null}
           className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
-          {loading === "Analyze" ? "..." : "Analyze Batch"}
+          {loading === "analyze" ? "..." : t("pipeline.analyze")}
         </button>
         <button
-          onClick={() => run("Generate", () => triggerOpportunityBatch(5))}
+          onClick={() =>
+            run("generate", t("pipeline.generate"), () => triggerOpportunityBatch(5))
+          }
           disabled={loading !== null}
           className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
         >
-          {loading === "Generate" ? "..." : "Generate Opportunities"}
+          {loading === "generate" ? "..." : t("pipeline.generate")}
         </button>
       </div>
-      {message ? <p className="mt-3 text-xs text-gray-600 break-all">{message}</p> : null}
+      {message ? <p className="mt-3 break-all text-xs text-gray-600">{message}</p> : null}
     </div>
   );
 }

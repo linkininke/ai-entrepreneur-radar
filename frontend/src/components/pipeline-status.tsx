@@ -1,20 +1,25 @@
+"use client";
+
+import { useLocale } from "@/contexts/locale-context";
 import type { JobRunItem } from "@/lib/api";
 
 export function PipelineStatus({ jobs, enabled }: { jobs: JobRunItem[]; enabled: boolean }) {
+  const { t } = useLocale();
+
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-gray-900">Automation Status</h3>
+        <h3 className="font-medium text-gray-900">{t("automation.title")}</h3>
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
             enabled ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
           }`}
         >
-          {enabled ? "Scheduler ON" : "Scheduler OFF"}
+          {enabled ? t("automation.schedulerOn") : t("automation.schedulerOff")}
         </span>
       </div>
       {jobs.length === 0 ? (
-        <p className="mt-3 text-sm text-gray-500">No job runs recorded yet.</p>
+        <p className="mt-3 text-sm text-gray-500">{t("automation.noJobs")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {jobs.slice(0, 5).map((job) => (
