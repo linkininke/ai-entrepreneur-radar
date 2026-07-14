@@ -1,17 +1,20 @@
-import { fetchAnalysis, fetchInformation } from "@/lib/api";
+import { fetchAnalysis, fetchInformation, fetchOpportunities } from "@/lib/api";
 
 export default async function Home() {
   let items: Awaited<ReturnType<typeof fetchInformation>>["items"] = [];
   let analyses: Awaited<ReturnType<typeof fetchAnalysis>>["items"] = [];
+  let opportunities: Awaited<ReturnType<typeof fetchOpportunities>>["items"] = [];
   let error = "";
 
   try {
-    const [informationData, analysisData] = await Promise.all([
+    const [informationData, analysisData, opportunityData] = await Promise.all([
       fetchInformation(),
       fetchAnalysis(),
+      fetchOpportunities(),
     ]);
     items = informationData.items;
     analyses = analysisData.items;
+    opportunities = opportunityData.items;
   } catch {
     error = "Backend API is not reachable yet.";
   }
@@ -26,10 +29,38 @@ export default async function Home() {
       </header>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Latest Information</h2>
+        <h2 className="text-xl font-semibold">Startup Opportunities</h2>
         {error ? (
           <p className="text-sm text-red-600">{error}</p>
-        ) : items.length === 0 ? (
+        ) : opportunities.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No opportunities yet. Run analysis first, then{" "}
+            <code className="rounded bg-gray-100 px-1 py-0.5">
+              POST /api/opportunities/generate/batch
+            </code>
+            .
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {opportunities.map((item) => (
+              <li key={item.id} className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                <p className="font-semibold text-emerald-900">{item.title}</p>
+                <p className="mt-2 text-sm text-gray-700">{item.description}</p>
+                <p className="mt-2 text-xs text-gray-600">
+                  audience: {item.target_audience} · confidence {item.confidence_score}
+                </p>
+                <p className="mt-2 text-sm text-gray-800">
+                  <span className="font-medium">Next step:</span> {item.suggested_action}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">Latest Information</h2>
+        {error ? null : items.length === 0 ? (
           <p className="text-sm text-gray-500">
             No data yet. Run{" "}
             <code className="rounded bg-gray-100 px-1 py-0.5">
@@ -76,9 +107,8 @@ export default async function Home() {
 
       <section className="space-y-2 text-sm text-gray-500">
         <p>
-          Run{" "}
-          <code className="rounded bg-gray-100 px-1 py-0.5">POST /api/analyze/batch?limit=5</code>{" "}
-          after setting <code className="rounded bg-gray-100 px-1 py-0.5">LLM_API_KEY</code> in `.env`.
+          Pipeline: crawl → analyze → generate opportunities. Set{" "}
+          <code className="rounded bg-gray-100 px-1 py-0.5">LLM_API_KEY</code> in `.env`.
         </p>
       </section>
     </main>

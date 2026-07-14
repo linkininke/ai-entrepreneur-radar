@@ -88,25 +88,25 @@ docker compose down
 
 ## 开发阶段
 
-当前处于 **Phase 2 — AI 分析系统**（已接入 LLM 分析接口）。
+当前处于 **Phase 3 — 机会生成系统**（已从 AI 分析生成创业机会）。
 
 ### API 快速测试
 
 ```bash
-# 采集 Hacker News Top Stories
+# 1. 采集 Hacker News Top Stories
 curl -X POST "http://localhost:8000/api/crawl/hackernews?limit=10"
 
-# 查看已采集信息
-curl "http://localhost:8000/api/information?limit=10"
-
-# 批量 AI 分析（需配置 LLM_API_KEY）
+# 2. 批量 AI 分析（需配置 LLM_API_KEY）
 curl -X POST "http://localhost:8000/api/analyze/batch?limit=5"
 
-# 查看分析结果
-curl "http://localhost:8000/api/analysis?limit=10"
+# 3. 批量生成创业机会
+curl -X POST "http://localhost:8000/api/opportunities/generate/batch?limit=5"
+
+# 4. 查看机会列表
+curl "http://localhost:8000/api/opportunities?limit=10"
 ```
 
-下一阶段：**Phase 3 — 机会生成系统**。
+下一阶段：**Phase 4 — 后端 API 完善**。
 
 ## License
 

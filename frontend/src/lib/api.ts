@@ -34,6 +34,23 @@ export type AnalysisListResponse = {
   items: AnalysisItem[];
 };
 
+export type OpportunityItem = {
+  id: number;
+  analysis_id: number;
+  title: string;
+  description: string;
+  target_audience: string;
+  problem_statement: string;
+  suggested_action: string;
+  confidence_score: number;
+  generated_at: string;
+};
+
+export type OpportunityListResponse = {
+  total: number;
+  items: OpportunityItem[];
+};
+
 export async function fetchInformation(): Promise<InformationListResponse> {
   const response = await fetch(`${API_BASE}/api/information?limit=10`, {
     cache: "no-store",
@@ -53,6 +70,18 @@ export async function fetchAnalysis(): Promise<AnalysisListResponse> {
 
   if (!response.ok) {
     throw new Error("Failed to fetch analysis");
+  }
+
+  return response.json();
+}
+
+export async function fetchOpportunities(): Promise<OpportunityListResponse> {
+  const response = await fetch(`${API_BASE}/api/opportunities?limit=10`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch opportunities");
   }
 
   return response.json();

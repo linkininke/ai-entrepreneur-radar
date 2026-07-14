@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.analysis import router as analysis_router
 from app.api.health import router as health_router
 from app.api.information import router as information_router
+from app.api.opportunities import router as opportunities_router
 from app.core.config import get_settings
 from app.core.logging import get_logger, setup_logging
 
@@ -38,3 +39,4 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(information_router)
 app.include_router(analysis_router)
+app.include_router(opportunities_router)
