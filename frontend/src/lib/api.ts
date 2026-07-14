@@ -87,6 +87,23 @@ export type SearchResponse = {
   items: SearchResultItem[];
 };
 
+export type JobRunItem = {
+  id: number;
+  job_type: string;
+  status: string;
+  message: string | null;
+  details: Record<string, unknown> | null;
+  started_at: string;
+  finished_at: string | null;
+};
+
+export type PipelineStatusResponse = {
+  scheduler_enabled: boolean;
+  crawl_interval_minutes: number;
+  pipeline_interval_minutes: number;
+  recent_jobs: JobRunItem[];
+};
+
 type ListParams = {
   limit?: number;
   skip?: number;
@@ -135,6 +152,14 @@ export function fetchStats(): Promise<StatsResponse> {
 
 export function fetchTrends(limit = 8): Promise<TrendListResponse> {
   return apiFetch(`/api/trends?limit=${limit}`);
+}
+
+export function fetchPipelineStatus(): Promise<PipelineStatusResponse> {
+  return apiFetch("/api/pipeline/status?limit=10");
+}
+
+export function triggerFullPipeline() {
+  return clientFetch("/api/pipeline/run", { method: "POST" });
 }
 
 export function searchItems(query: string, scope = "all", limit = 20): Promise<SearchResponse> {

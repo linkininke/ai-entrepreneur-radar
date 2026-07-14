@@ -88,18 +88,28 @@ docker compose down
 
 ## 开发阶段
 
-当前处于 **Phase 5 — 前端 Dashboard**（多页面导航、搜索交互、Pipeline 操作面板）。
+当前处于 **Phase 6 — 自动化运行**（定时采集、Pipeline 调度、任务记录）。
 
-### 前端页面
+### 自动化服务
 
-| 路径 | 说明 |
-|------|------|
-| http://localhost:3000 | Dashboard 概览 |
-| http://localhost:3000/opportunities | 创业机会列表 |
-| http://localhost:3000/information | 信息采集 Feed |
-| http://localhost:3000/search | 关键词搜索 |
+`docker compose up` 会启动 `worker` 容器，按配置定时执行：
 
-下一阶段：**Phase 6 — 自动化运行**。
+| 任务 | 默认间隔 | 说明 |
+|------|----------|------|
+| Crawl | 60 分钟 | 采集 Hacker News |
+| Full Pipeline | 120 分钟 | 采集 → 分析 → 生成机会 |
+
+### Pipeline API
+
+```bash
+# 查看调度状态与最近任务
+curl "http://localhost:8000/api/pipeline/status"
+
+# 手动触发完整 Pipeline
+curl -X POST "http://localhost:8000/api/pipeline/run"
+```
+
+下一阶段：**Phase 7 — 商业验证**。
 
 ## License
 
