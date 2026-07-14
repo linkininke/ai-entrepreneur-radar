@@ -3,6 +3,8 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8000";
 
+const CLIENT_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
 export type InformationItem = {
   id: number;
   source_id: number;
@@ -71,64 +73,83 @@ export type TrendListResponse = {
   items: TrendItem[];
 };
 
-export async function fetchInformation(): Promise<InformationListResponse> {
-  const response = await fetch(`${API_BASE}/api/information?limit=10`, {
-    cache: "no-store",
-  });
+export type SearchResultItem = {
+  type: "information" | "analysis" | "opportunity";
+  id: number;
+  title: string;
+  snippet: string;
+  score: number | null;
+};
 
+export type SearchResponse = {
+  query: string;
+  total: number;
+  items: SearchResultItem[];
+};
+
+type ListParams = {
+  limit?: number;
+  skip?: number;
+};
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
   if (!response.ok) {
-    throw new Error("Failed to fetch information");
-  }
-
-  return response.json();
-}
-
-export async function fetchAnalysis(): Promise<AnalysisListResponse> {
-  const response = await fetch(`${API_BASE}/api/analysis?limit=10`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch analysis");
-  }
-
-  return response.json();
-}
-
-export async function fetchOpportunities(): Promise<OpportunityListResponse> {
-  const response = await fetch(`${API_BASE}/api/opportunities?limit=10`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch opportunities");
-  }
-
-  return response.json();
-}
-
-export async function fetchStats(): Promise<StatsResponse> {
-  const response = await fetch(`${API_BASE}/api/stats`, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error("Failed to fetch stats");
+    const detail = await response.text();
+    throw new Error(detail || `Request failed: ${path}`);
   }
   return response.json();
 }
 
-export async function fetchTrends(): Promise<TrendListResponse> {
-  const response = await fetch(`${API_BASE}/api/trends?limit=8`, { cache: "no-store" });
+async function clientFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${CLIENT_API_BASE}${path}`, init);
   if (!response.ok) {
-    throw new Error("Failed to fetch trends");
+    const detail = await response.text();
+    throw new Error(detail || `Request failed: ${path}`);
   }
   return response.json();
 }
 
-export async function triggerHackerNewsCrawl(limit = 10): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/crawl/hackernews?limit=${limit}`, {
-    method: "POST",
-  });
+export function fetchInformation(params: ListParams = {}): Promise<InformationListResponse> {
+  const limit = params.limit ?? 10;
+  const skip = params.skip ?? 0;
+  return apiFetch(`/api/information?limit=${limit}&skip=${skip}`);
+}
 
-  if (!response.ok) {
-    throw new Error("Failed to trigger crawl");
-  }
+export function fetchAnalysis(params: ListParams = {}): Promise<AnalysisListResponse> {
+  const limit = params.limit ?? 10;
+  const skip = params.skip ?? 0;
+  return apiFetch(`/api/analysis?limit=${limit}&skip=${skip}`);
+}
+
+export function fetchOpportunities(params: ListParams & { min_confidence?: number } = {}): Promise<OpportunityListResponse> {
+  const limit = params.limit ?? 10;
+  const skip = params.skip ?? 0;
+  const minConfidence = params.min_confidence != null ? `&min_confidence=${params.min_confidence}` : "";
+  return apiFetch(`/api/opportunities?limit=${limit}&skip=${skip}${minConfidence}`);
+}
+
+export function fetchStats(): Promise<StatsResponse> {
+  return apiFetch("/api/stats");
+}
+
+export function fetchTrends(limit = 8): Promise<TrendListResponse> {
+  return apiFetch(`/api/trends?limit=${limit}`);
+}
+
+export function searchItems(query: string, scope = "all", limit = 20): Promise<SearchResponse> {
+  const encoded = encodeURIComponent(query);
+  return clientFetch(`/api/search?q=${encoded}&scope=${scope}&limit=${limit}`);
+}
+
+export function triggerHackerNewsCrawl(limit = 10) {
+  return clientFetch(`/api/crawl/hackernews?limit=${limit}`, { method: "POST" });
+}
+
+export function triggerAnalyzeBatch(limit = 5) {
+  return clientFetch(`/api/analyze/batch?limit=${limit}`, { method: "POST" });
+}
+
+export function triggerOpportunityBatch(limit = 5) {
+  return clientFetch(`/api/opportunities/generate/batch?limit=${limit}`, { method: "POST" });
 }

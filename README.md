@@ -88,30 +88,18 @@ docker compose down
 
 ## 开发阶段
 
-当前处于 **Phase 4 — 后端 API 完善**（趋势、搜索、统计、过滤参数）。
+当前处于 **Phase 5 — 前端 Dashboard**（多页面导航、搜索交互、Pipeline 操作面板）。
 
-### API 快速测试
+### 前端页面
 
-```bash
-# 统计概览
-curl "http://localhost:8000/api/stats"
+| 路径 | 说明 |
+|------|------|
+| http://localhost:3000 | Dashboard 概览 |
+| http://localhost:3000/opportunities | 创业机会列表 |
+| http://localhost:3000/information | 信息采集 Feed |
+| http://localhost:3000/search | 关键词搜索 |
 
-# 趋势话题（从分析结果聚合）
-curl "http://localhost:8000/api/trends?limit=10"
-
-# 关键词搜索
-curl "http://localhost:8000/api/search?q=AI&scope=all"
-
-# 数据源列表
-curl "http://localhost:8000/api/sources"
-
-# 带过滤的列表查询
-curl "http://localhost:8000/api/analysis?min_relevance=50&commercial_potential=high"
-curl "http://localhost:8000/api/opportunities?min_confidence=60"
-curl "http://localhost:8000/api/information?q=python&source_id=1"
-```
-
-下一阶段：**Phase 5 — 前端 Dashboard**。
+下一阶段：**Phase 6 — 自动化运行**。
 
 ## License
 
