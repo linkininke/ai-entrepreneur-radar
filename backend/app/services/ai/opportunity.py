@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.logging import get_logger
 from app.models.analysis import Analysis
 from app.models.opportunity import Opportunity
-from app.models.source import Information
 from app.services.ai.llm import LLMService, LLMServiceError
+from app.services.ai.localization import apply_locale_to_opportunities
 
 logger = get_logger("ai_agent")
 
@@ -13,7 +13,12 @@ class OpportunityService:
     def __init__(self) -> None:
         self.llm = LLMService()
 
-    def generate_from_analysis(self, db: Session, analysis_id: int) -> Opportunity:
+    def generate_from_analysis(
+        self,
+        db: Session,
+        analysis_id: int,
+        locale: str | None = None,
+    ) -> Opportunity:
         analysis = (
             db.query(Analysis)
             .options(joinedload(Analysis.information))
@@ -33,6 +38,7 @@ class OpportunityService:
                 analysis_summary=analysis.summary,
                 key_topics=analysis.key_topics or [],
                 commercial_potential=analysis.commercial_potential,
+                locale=locale or analysis.locale,
             )
         except LLMServiceError:
             raise
@@ -49,6 +55,8 @@ class OpportunityService:
             "problem_statement": result["problem_statement"],
             "suggested_action": result["suggested_action"],
             "confidence_score": result["confidence_score"],
+            "locale": result["locale"],
+            "translations": None,
             "raw_response": result["raw_response"],
         }
 
@@ -65,7 +73,7 @@ class OpportunityService:
         db.refresh(opportunity)
         return opportunity
 
-    def generate_batch(self, db: Session, limit: int = 5) -> list[Opportunity]:
+    def generate_batch(self, db: Session, limit: int = 5, locale: str | None = None) -> list[Opportunity]:
         pending = (
             db.query(Analysis)
             .outerjoin(Opportunity, Analysis.id == Opportunity.analysis_id)
@@ -77,7 +85,7 @@ class OpportunityService:
 
         results: list[Opportunity] = []
         for analysis in pending:
-            results.append(self.generate_from_analysis(db, analysis.id))
+            results.append(self.generate_from_analysis(db, analysis.id, locale=locale))
         return results
 
 
@@ -86,6 +94,7 @@ def list_opportunities(
     skip: int = 0,
     limit: int = 20,
     min_confidence: float | None = None,
+    locale: str | None = None,
 ) -> tuple[list[Opportunity], int]:
     query = db.query(Opportunity)
 
@@ -95,4 +104,6 @@ def list_opportunities(
     query = query.order_by(Opportunity.generated_at.desc())
     total = query.count()
     items = query.offset(skip).limit(limit).all()
+    items = apply_locale_to_opportunities(db, items, locale)
+
     return items, total

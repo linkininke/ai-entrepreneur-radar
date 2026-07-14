@@ -12,19 +12,29 @@ type Props = {
 
 export function ClientLocalizedDateTime({ iso, labelKey, className }: Props) {
   const { locale, t } = useLocale();
-  const [text, setText] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setText(
-      t(labelKey, {
-        date: new Date(iso).toLocaleString(locale),
-      }),
-    );
-  }, [iso, locale, labelKey, t]);
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <p className={className} aria-hidden="true" />;
+  }
 
   return (
-    <p className={className} suppressHydrationWarning>
-      {text ?? "\u00A0"}
+    <p className={className}>
+      {t(labelKey, {
+        date: new Date(iso).toLocaleString(locale, {
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: false,
+        }),
+      })}
     </p>
   );
 }

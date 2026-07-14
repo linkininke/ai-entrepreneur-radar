@@ -1,16 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useLocale } from "@/contexts/locale-context";
 import {
   triggerAnalyzeBatch,
-  triggerHackerNewsCrawl,
+  triggerCrawlAll,
   triggerOpportunityBatch,
 } from "@/lib/api";
 
 export function PipelineActions() {
-  const { t } = useLocale();
+  const router = useRouter();
+  const { locale, t } = useLocale();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -25,6 +27,7 @@ export function PipelineActions() {
           result: JSON.stringify(result),
         }),
       );
+      router.refresh();
     } catch (err) {
       setMessage(
         t("pipeline.failed", {
@@ -42,14 +45,14 @@ export function PipelineActions() {
       <h3 className="font-medium text-gray-900">{t("pipeline.actions")}</h3>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
-          onClick={() => run("crawl", t("pipeline.crawl"), () => triggerHackerNewsCrawl(10))}
+          onClick={() => run("crawl", t("pipeline.crawl"), () => triggerCrawlAll(10))}
           disabled={loading !== null}
           className="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
           {loading === "crawl" ? "..." : t("pipeline.crawl")}
         </button>
         <button
-          onClick={() => run("analyze", t("pipeline.analyze"), () => triggerAnalyzeBatch(5))}
+          onClick={() => run("analyze", t("pipeline.analyze"), () => triggerAnalyzeBatch(5, locale))}
           disabled={loading !== null}
           className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
@@ -57,7 +60,7 @@ export function PipelineActions() {
         </button>
         <button
           onClick={() =>
-            run("generate", t("pipeline.generate"), () => triggerOpportunityBatch(5))
+            run("generate", t("pipeline.generate"), () => triggerOpportunityBatch(5, locale))
           }
           disabled={loading !== null}
           className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"

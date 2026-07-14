@@ -8,9 +8,11 @@ from app.models.job_run import JobRun
 from app.services.ai.analysis import AnalysisService
 from app.services.ai.llm import LLMServiceError
 from app.services.ai.opportunity import OpportunityService
-from app.services.crawler.hackernews import HackerNewsCollector
+from app.services.crawler.registry import run_all_collectors
 
 logger = get_logger("api")
+
+StepResult = dict[str, str | dict | None]
 
 
 def _finish_job(db: Session, job: JobRun, status: str, message: str, details: dict | None = None) -> JobRun:
@@ -31,18 +33,90 @@ def _start_job(db: Session, job_type: str) -> JobRun:
     return job
 
 
-def run_crawl_job(db: Session) -> JobRun:
+def _execute_crawl(db: Session) -> StepResult:
     settings = get_settings()
+    outcome = run_all_collectors(db, limit=settings.crawl_batch_size, settings=settings)
+    details = {
+        "fetched": outcome.total_fetched,
+        "created": outcome.total_created,
+        "updated": outcome.total_updated,
+        "sources": {
+            item.source: {
+                "fetched": item.fetched,
+                "created": item.created,
+                "updated": item.updated,
+            }
+            for item in outcome.sources
+        },
+    }
+    return {
+        "status": "success",
+        "message": "crawl completed",
+        "details": details,
+    }
+
+
+def _execute_analyze(db: Session) -> StepResult:
+    settings = get_settings()
+    if not settings.llm_api_key:
+        return {
+            "status": "skipped",
+            "message": "LLM_API_KEY is not configured",
+            "details": None,
+        }
+
+    try:
+        service = AnalysisService()
+        items = service.analyze_batch(
+            db,
+            limit=settings.analyze_batch_size,
+            locale=settings.llm_default_locale,
+        )
+        return {
+            "status": "success",
+            "message": "analysis completed",
+            "details": {"analyzed": len(items)},
+        }
+    except LLMServiceError as exc:
+        return {"status": "failed", "message": str(exc), "details": None}
+
+
+def _execute_opportunity(db: Session) -> StepResult:
+    settings = get_settings()
+    if not settings.llm_api_key:
+        return {
+            "status": "skipped",
+            "message": "LLM_API_KEY is not configured",
+            "details": None,
+        }
+
+    try:
+        service = OpportunityService()
+        items = service.generate_batch(
+            db,
+            limit=settings.opportunity_batch_size,
+            locale=settings.llm_default_locale,
+        )
+        return {
+            "status": "success",
+            "message": "opportunity generation completed",
+            "details": {"generated": len(items)},
+        }
+    except LLMServiceError as exc:
+        return {"status": "failed", "message": str(exc), "details": None}
+
+
+
+def run_crawl_job(db: Session) -> JobRun:
     job = _start_job(db, "crawl")
     try:
-        collector = HackerNewsCollector()
-        result = collector.collect(db, limit=settings.crawl_batch_size)
+        outcome = _execute_crawl(db)
         return _finish_job(
             db,
             job,
-            "success",
-            "crawl completed",
-            {"fetched": result.fetched, "created": result.created, "updated": result.updated},
+            str(outcome["status"]),
+            str(outcome["message"]),
+            outcome.get("details") if isinstance(outcome.get("details"), dict) else None,
         )
     except Exception as exc:
         logger.exception("Crawl job failed")
@@ -50,36 +124,32 @@ def run_crawl_job(db: Session) -> JobRun:
 
 
 def run_analyze_job(db: Session) -> JobRun:
-    settings = get_settings()
     job = _start_job(db, "analyze")
-
-    if not settings.llm_api_key:
-        return _finish_job(db, job, "skipped", "LLM_API_KEY is not configured")
-
     try:
-        service = AnalysisService()
-        items = service.analyze_batch(db, limit=settings.analyze_batch_size)
-        return _finish_job(db, job, "success", "analysis completed", {"analyzed": len(items)})
-    except LLMServiceError as exc:
-        return _finish_job(db, job, "failed", str(exc))
+        outcome = _execute_analyze(db)
+        return _finish_job(
+            db,
+            job,
+            str(outcome["status"]),
+            str(outcome["message"]),
+            outcome.get("details") if isinstance(outcome.get("details"), dict) else None,
+        )
     except Exception as exc:
         logger.exception("Analyze job failed")
         return _finish_job(db, job, "failed", str(exc))
 
 
 def run_opportunity_job(db: Session) -> JobRun:
-    settings = get_settings()
     job = _start_job(db, "opportunity")
-
-    if not settings.llm_api_key:
-        return _finish_job(db, job, "skipped", "LLM_API_KEY is not configured")
-
     try:
-        service = OpportunityService()
-        items = service.generate_batch(db, limit=settings.opportunity_batch_size)
-        return _finish_job(db, job, "success", "opportunity generation completed", {"generated": len(items)})
-    except LLMServiceError as exc:
-        return _finish_job(db, job, "failed", str(exc))
+        outcome = _execute_opportunity(db)
+        return _finish_job(
+            db,
+            job,
+            str(outcome["status"]),
+            str(outcome["message"]),
+            outcome.get("details") if isinstance(outcome.get("details"), dict) else None,
+        )
     except Exception as exc:
         logger.exception("Opportunity job failed")
         return _finish_job(db, job, "failed", str(exc))
@@ -90,18 +160,22 @@ def run_full_pipeline(db: Session) -> JobRun:
     results: dict[str, dict] = {}
 
     try:
-        crawl = run_crawl_job(db)
-        results["crawl"] = {"status": crawl.status, "message": crawl.message, "details": crawl.details}
+        for step_name, executor in (
+            ("crawl", _execute_crawl),
+            ("analyze", _execute_analyze),
+            ("opportunity", _execute_opportunity),
+        ):
+            try:
+                outcome = executor(db)
+            except Exception as exc:
+                logger.exception("%s step failed inside full pipeline", step_name)
+                outcome = {"status": "failed", "message": str(exc), "details": None}
 
-        analyze = run_analyze_job(db)
-        results["analyze"] = {"status": analyze.status, "message": analyze.message, "details": analyze.details}
-
-        opportunity = run_opportunity_job(db)
-        results["opportunity"] = {
-            "status": opportunity.status,
-            "message": opportunity.message,
-            "details": opportunity.details,
-        }
+            results[step_name] = {
+                "status": outcome["status"],
+                "message": outcome["message"],
+                "details": outcome.get("details"),
+            }
 
         failed = [name for name, data in results.items() if data["status"] == "failed"]
         status = "failed" if failed else "success"

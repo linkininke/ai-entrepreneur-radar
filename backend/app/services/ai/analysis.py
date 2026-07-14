@@ -4,6 +4,7 @@ from app.core.logging import get_logger
 from app.models.analysis import Analysis
 from app.models.source import Information
 from app.services.ai.llm import LLMService, LLMServiceError
+from app.services.ai.localization import apply_locale_to_analyses
 
 logger = get_logger("ai_agent")
 
@@ -12,7 +13,12 @@ class AnalysisService:
     def __init__(self) -> None:
         self.llm = LLMService()
 
-    def analyze_information(self, db: Session, information_id: int) -> Analysis:
+    def analyze_information(
+        self,
+        db: Session,
+        information_id: int,
+        locale: str | None = None,
+    ) -> Analysis:
         information = db.query(Information).filter(Information.id == information_id).first()
         if not information:
             raise ValueError(f"Information {information_id} not found")
@@ -22,6 +28,7 @@ class AnalysisService:
                 title=information.title,
                 url=information.url,
                 content=information.content or information.summary,
+                locale=locale,
             )
         except LLMServiceError:
             raise
@@ -36,6 +43,8 @@ class AnalysisService:
             "key_topics": result["key_topics"],
             "relevance_score": result["relevance_score"],
             "commercial_potential": result["commercial_potential"],
+            "locale": result["locale"],
+            "translations": None,
             "raw_response": result["raw_response"],
         }
 
@@ -52,7 +61,7 @@ class AnalysisService:
         db.refresh(analysis)
         return analysis
 
-    def analyze_batch(self, db: Session, limit: int = 5) -> list[Analysis]:
+    def analyze_batch(self, db: Session, limit: int = 5, locale: str | None = None) -> list[Analysis]:
         pending = (
             db.query(Information)
             .outerjoin(Analysis, Information.id == Analysis.information_id)
@@ -64,7 +73,7 @@ class AnalysisService:
 
         results: list[Analysis] = []
         for item in pending:
-            results.append(self.analyze_information(db, item.id))
+            results.append(self.analyze_information(db, item.id, locale=locale))
         return results
 
 
@@ -74,6 +83,7 @@ def list_analyses(
     limit: int = 20,
     commercial_potential: str | None = None,
     min_relevance: float | None = None,
+    locale: str | None = None,
 ) -> tuple[list[Analysis], int]:
     query = db.query(Analysis)
 
@@ -86,4 +96,6 @@ def list_analyses(
     query = query.order_by(Analysis.analyzed_at.desc())
     total = query.count()
     items = query.offset(skip).limit(limit).all()
+    items = apply_locale_to_analyses(db, items, locale)
+
     return items, total

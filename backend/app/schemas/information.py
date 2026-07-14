@@ -42,3 +42,10 @@ class CrawlResponse(BaseModel):
     fetched: int
     created: int
     updated: int
+
+
+class MultiCrawlResponse(BaseModel):
+    sources: list[CrawlResponse]
+    total_fetched: int
+    total_created: int
+    total_updated: int

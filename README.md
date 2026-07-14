@@ -96,8 +96,24 @@ docker compose down
 
 | 任务 | 默认间隔 | 说明 |
 |------|----------|------|
-| Crawl | 60 分钟 | 采集 Hacker News |
+| Crawl | 60 分钟 | 采集全部数据源（HN / GitHub / RSS / Product Hunt） |
 | Full Pipeline | 120 分钟 | 采集 → 分析 → 生成机会 |
+
+### 数据源 API
+
+```bash
+# 查看已启用/可用的采集源
+curl "http://localhost:8000/api/crawl/sources"
+
+# 采集全部数据源
+curl -X POST "http://localhost:8000/api/crawl/all?limit=20"
+
+# 单独采集某一来源
+curl -X POST "http://localhost:8000/api/crawl/github?limit=10"
+curl -X POST "http://localhost:8000/api/crawl/rss?limit=10"
+curl -X POST "http://localhost:8000/api/crawl/producthunt?limit=10"
+curl -X POST "http://localhost:8000/api/crawl/hackernews?limit=10"
+```
 
 ### Pipeline API
 

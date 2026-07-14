@@ -20,6 +20,8 @@ class Opportunity(Base):
     problem_statement: Mapped[str] = mapped_column(Text, nullable=False)
     suggested_action: Mapped[str] = mapped_column(Text, nullable=False)
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    locale: Mapped[str] = mapped_column(String(16), nullable=False, default="zh-CN")
+    translations: Mapped[dict | None] = mapped_column(JSONB)
     generated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -107,6 +107,7 @@ export type PipelineStatusResponse = {
 type ListParams = {
   limit?: number;
   skip?: number;
+  locale?: string;
 };
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -127,23 +128,29 @@ async function clientFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json();
 }
 
+function localeQuery(locale?: string): string {
+  return locale ? `&locale=${encodeURIComponent(locale)}` : "";
+}
+
 export function fetchInformation(params: ListParams = {}): Promise<InformationListResponse> {
   const limit = params.limit ?? 10;
   const skip = params.skip ?? 0;
-  return apiFetch(`/api/information?limit=${limit}&skip=${skip}`);
+  return apiFetch(`/api/information?limit=${limit}&skip=${skip}${localeQuery(params.locale)}`);
 }
 
 export function fetchAnalysis(params: ListParams = {}): Promise<AnalysisListResponse> {
   const limit = params.limit ?? 10;
   const skip = params.skip ?? 0;
-  return apiFetch(`/api/analysis?limit=${limit}&skip=${skip}`);
+  return apiFetch(`/api/analysis?limit=${limit}&skip=${skip}${localeQuery(params.locale)}`);
 }
 
 export function fetchOpportunities(params: ListParams & { min_confidence?: number } = {}): Promise<OpportunityListResponse> {
   const limit = params.limit ?? 10;
   const skip = params.skip ?? 0;
   const minConfidence = params.min_confidence != null ? `&min_confidence=${params.min_confidence}` : "";
-  return apiFetch(`/api/opportunities?limit=${limit}&skip=${skip}${minConfidence}`);
+  return apiFetch(
+    `/api/opportunities?limit=${limit}&skip=${skip}${minConfidence}${localeQuery(params.locale)}`,
+  );
 }
 
 export function fetchStats(): Promise<StatsResponse> {
@@ -167,14 +174,31 @@ export function searchItems(query: string, scope = "all", limit = 20): Promise<S
   return clientFetch(`/api/search?q=${encoded}&scope=${scope}&limit=${limit}`);
 }
 
+export function triggerCrawlAll(limit = 10) {
+  return clientFetch(`/api/crawl/all?limit=${limit}`, { method: "POST" });
+}
+
 export function triggerHackerNewsCrawl(limit = 10) {
   return clientFetch(`/api/crawl/hackernews?limit=${limit}`, { method: "POST" });
 }
 
-export function triggerAnalyzeBatch(limit = 5) {
-  return clientFetch(`/api/analyze/batch?limit=${limit}`, { method: "POST" });
+export function triggerAnalyzeBatch(limit = 5, locale?: string) {
+  return clientFetch(
+    `/api/analyze/batch?limit=${limit}${localeQuery(locale)}`,
+    { method: "POST" },
+  );
 }
 
-export function triggerOpportunityBatch(limit = 5) {
-  return clientFetch(`/api/opportunities/generate/batch?limit=${limit}`, { method: "POST" });
+export function triggerOpportunityBatch(limit = 5, locale?: string) {
+  return clientFetch(
+    `/api/opportunities/generate/batch?limit=${limit}${localeQuery(locale)}`,
+    { method: "POST" },
+  );
+}
+
+export function localizeContentBatch(locale: string, limit = 30) {
+  return clientFetch(
+    `/api/localize/batch?locale=${encodeURIComponent(locale)}&limit=${limit}`,
+    { method: "POST" },
+  );
 }

@@ -5,6 +5,10 @@ import type { JobRunItem } from "@/lib/api";
 
 export function PipelineStatus({ jobs, enabled }: { jobs: JobRunItem[]; enabled: boolean }) {
   const { t } = useLocale();
+  const visibleJobs = jobs
+    .filter((job) => job.status !== "skipped")
+    .filter((job) => job.job_type === "full_pipeline" || job.job_type === "crawl")
+    .slice(0, 5);
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -18,11 +22,11 @@ export function PipelineStatus({ jobs, enabled }: { jobs: JobRunItem[]; enabled:
           {enabled ? t("automation.schedulerOn") : t("automation.schedulerOff")}
         </span>
       </div>
-      {jobs.length === 0 ? (
+      {visibleJobs.length === 0 ? (
         <p className="mt-3 text-sm text-gray-500">{t("automation.noJobs")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
-          {jobs.slice(0, 5).map((job) => (
+          {visibleJobs.map((job) => (
             <li key={job.id} className="flex items-center justify-between text-sm">
               <span className="text-gray-700">
                 {job.job_type}{" "}

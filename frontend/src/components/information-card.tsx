@@ -1,8 +1,18 @@
 "use client";
 
-import { ClientLocalizedDateTime } from "@/components/client-localized-datetime";
+import dynamic from "next/dynamic";
+
 import { useLocale } from "@/contexts/locale-context";
 import type { AnalysisItem, InformationItem } from "@/lib/api";
+
+const ClientLocalizedDateTime = dynamic(
+  () =>
+    import("@/components/client-localized-datetime").then((mod) => mod.ClientLocalizedDateTime),
+  {
+    ssr: false,
+    loading: () => <p className="mt-2 text-xs text-gray-500" aria-hidden="true" />,
+  },
+);
 
 type Props = {
   item: InformationItem;

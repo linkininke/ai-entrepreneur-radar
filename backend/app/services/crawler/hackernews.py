@@ -4,8 +4,8 @@ import httpx
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.models.source import Information, Source
 from app.services.crawler.base import BaseCollector, CrawlResult
+from app.services.crawler.storage import get_or_create_source, upsert_information
 
 logger = get_logger("crawler")
 
@@ -19,7 +19,12 @@ class HackerNewsCollector(BaseCollector):
     source_name = "hackernews"
 
     def collect(self, db: Session, limit: int = 20) -> CrawlResult:
-        source = self._get_or_create_source(db)
+        source = get_or_create_source(
+            db,
+            name=HN_SOURCE_NAME,
+            source_type=HN_SOURCE_TYPE,
+            url=HN_SOURCE_URL,
+        )
         story_ids = self._fetch_top_story_ids(limit)
         created = 0
         updated = 0
@@ -30,37 +35,25 @@ class HackerNewsCollector(BaseCollector):
                 continue
 
             external_id = str(item["id"])
-            existing = (
-                db.query(Information)
-                .filter(
-                    Information.source_id == source.id,
-                    Information.external_id == external_id,
-                )
-                .first()
-            )
-
             published_at = None
             if item.get("time"):
                 published_at = datetime.fromtimestamp(item["time"], tz=UTC)
 
-            payload = {
-                "source_id": source.id,
-                "external_id": external_id,
-                "title": item.get("title") or "Untitled",
-                "url": item.get("url"),
-                "summary": None,
-                "content": item.get("text"),
-                "published_at": published_at,
-                "raw_data": item,
-            }
-
-            if existing:
-                for key, value in payload.items():
-                    setattr(existing, key, value)
-                updated += 1
-            else:
-                db.add(Information(**payload))
+            outcome = upsert_information(
+                db,
+                source=source,
+                external_id=external_id,
+                title=item.get("title") or "Untitled",
+                url=item.get("url"),
+                summary=None,
+                content=item.get("text"),
+                published_at=published_at,
+                raw_data=item,
+            )
+            if outcome == "created":
                 created += 1
+            else:
+                updated += 1
 
         db.commit()
         logger.info(
@@ -70,22 +63,6 @@ class HackerNewsCollector(BaseCollector):
             updated,
         )
         return CrawlResult(fetched=len(story_ids), created=created, updated=updated)
-
-    def _get_or_create_source(self, db: Session) -> Source:
-        source = db.query(Source).filter(Source.name == HN_SOURCE_NAME).first()
-        if source:
-            return source
-
-        source = Source(
-            name=HN_SOURCE_NAME,
-            source_type=HN_SOURCE_TYPE,
-            url=HN_SOURCE_URL,
-            enabled=True,
-        )
-        db.add(source)
-        db.commit()
-        db.refresh(source)
-        return source
 
     def _fetch_top_story_ids(self, limit: int) -> list[int]:
         with httpx.Client(timeout=15.0) as client:

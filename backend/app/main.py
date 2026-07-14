@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.localization import router as localization_router
 from app.api.pipeline import router as pipeline_router
 from app.api.dashboard import router as dashboard_router
 from app.api.analysis import router as analysis_router
@@ -44,3 +45,4 @@ app.include_router(pipeline_router)
 app.include_router(information_router)
 app.include_router(analysis_router)
 app.include_router(opportunities_router)
+app.include_router(localization_router)

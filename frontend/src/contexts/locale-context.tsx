@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -13,10 +14,12 @@ import {
   DEFAULT_LOCALE,
   interpolate,
   isLocale,
+  LOCALE_COOKIE_KEY,
   LOCALE_STORAGE_KEY,
   MESSAGES,
 } from "@/i18n/messages";
 import type { Locale, Messages } from "@/i18n/types";
+import { localizeContentBatch } from "@/lib/api";
 
 type LocaleContextValue = {
   locale: Locale;
@@ -58,9 +61,17 @@ function getMessage(messages: Messages, key: string): string {
   return typeof current === "string" ? current : key;
 }
 
+function persistLocale(locale: Locale) {
+  document.documentElement.lang = locale;
+  localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  document.cookie = `${LOCALE_COOKIE_KEY}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+}
+
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
   const [ready, setReady] = useState(false);
+  const [contentSynced, setContentSynced] = useState(false);
 
   useEffect(() => {
     setLocaleState(resolveInitialLocale());
@@ -69,12 +80,23 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    document.documentElement.lang = locale;
-    localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    persistLocale(locale);
   }, [locale, ready]);
 
+  useEffect(() => {
+    if (!ready || contentSynced) return;
+    void localizeContentBatch(locale)
+      .catch(() => undefined)
+      .finally(() => {
+        setContentSynced(true);
+        router.refresh();
+      });
+  }, [ready, contentSynced, locale, router]);
+
   const setLocale = useCallback((next: Locale) => {
+    persistLocale(next);
     setLocaleState(next);
+    setContentSynced(false);
   }, []);
 
   const messages = MESSAGES[locale];

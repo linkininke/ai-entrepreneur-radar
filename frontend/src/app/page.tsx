@@ -1,4 +1,5 @@
 import { DashboardPageContent, DashboardPageError } from "@/components/dashboard-page-content";
+import { getServerLocale } from "@/lib/server-locale";
 import {
   fetchAnalysis,
   fetchInformation,
@@ -9,13 +10,15 @@ import {
 } from "@/lib/api";
 
 export default async function DashboardPage() {
+  const locale = getServerLocale();
+
   try {
     const [stats, trends, opportunities, information, analyses, pipeline] = await Promise.all([
       fetchStats(),
       fetchTrends(10),
-      fetchOpportunities({ limit: 5 }),
+      fetchOpportunities({ limit: 5, locale }),
       fetchInformation({ limit: 5 }),
-      fetchAnalysis({ limit: 20 }),
+      fetchAnalysis({ limit: 20, locale }),
       fetchPipelineStatus(),
     ]);
 

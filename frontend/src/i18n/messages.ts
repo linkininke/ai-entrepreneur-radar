@@ -2,6 +2,7 @@ import type { Locale, LocaleOption, Messages } from "./types";
 
 export const DEFAULT_LOCALE: Locale = "zh-CN";
 export const LOCALE_STORAGE_KEY = "ai-radar-locale";
+export const LOCALE_COOKIE_KEY = "ai-radar-locale";
 
 export const LOCALE_OPTIONS: LocaleOption[] = [
   { value: "zh-CN", nativeName: "简体中文" },
@@ -45,7 +46,7 @@ const en: Messages = {
   },
   pipeline: {
     actions: "Pipeline Actions",
-    crawl: "Crawl HN",
+    crawl: "Crawl All Sources",
     analyze: "Analyze Batch",
     generate: "Generate Opportunities",
     completed: "{action} completed: {result}",
@@ -75,7 +76,7 @@ const en: Messages = {
   information: {
     title: "Information Feed",
     subtitle: "{total} items collected from sources.",
-    empty: 'No information yet. Use "Crawl HN" on the Dashboard.',
+    empty: 'No information yet. Use "Crawl All Sources" on the Dashboard.',
     loadError: "Failed to load information feed.",
     collected: "collected {date}",
     aiInsight: "AI Insight",
@@ -129,7 +130,7 @@ const zhCN: Messages = {
   },
   pipeline: {
     actions: "流水线操作",
-    crawl: "抓取 HN",
+    crawl: "抓取全部数据源",
     analyze: "批量分析",
     generate: "生成机会",
     completed: "{action} 完成：{result}",
@@ -159,7 +160,7 @@ const zhCN: Messages = {
   information: {
     title: "情报流",
     subtitle: "已从数据源采集 {total} 条情报。",
-    empty: "暂无情报。请在仪表盘使用「抓取 HN」。",
+    empty: "暂无情报。请在仪表盘使用「抓取全部数据源」。",
     loadError: "加载情报流失败。",
     collected: "采集于 {date}",
     aiInsight: "AI 洞察",
@@ -205,7 +206,7 @@ const ja: Messages = {
   },
   pipeline: {
     actions: "パイプライン操作",
-    crawl: "HNをクロール",
+    crawl: "全ソースをクロール",
     analyze: "一括分析",
     generate: "機会を生成",
     completed: "{action} 完了：{result}",
@@ -231,7 +232,7 @@ const ja: Messages = {
   information: {
     title: "情報フィード",
     subtitle: "ソースから {total} 件を収集しました。",
-    empty: "情報がありません。ダッシュボードで「HNをクロール」を使用してください。",
+    empty: "情報がありません。ダッシュボードで「全ソースをクロール」を使用してください。",
     loadError: "情報フィードの読み込みに失敗しました。",
     collected: "収集 {date}",
     aiInsight: "AIインサイト",
@@ -277,7 +278,7 @@ const ko: Messages = {
   },
   pipeline: {
     actions: "파이프라인 작업",
-    crawl: "HN 크롤링",
+    crawl: "전체 소스 크롤링",
     analyze: "일괄 분석",
     generate: "기회 생성",
     completed: "{action} 완료: {result}",
@@ -303,7 +304,7 @@ const ko: Messages = {
   information: {
     title: "정보 피드",
     subtitle: "소스에서 {total}개 항목을 수집했습니다.",
-    empty: '정보가 없습니다. 대시보드에서 "HN 크롤링"을 사용하세요.',
+    empty: '정보가 없습니다. 대시보드에서 "전체 소스 크롤링"을 사용하세요.',
     loadError: "정보 피드를 불러오지 못했습니다.",
     collected: "수집 {date}",
     aiInsight: "AI 인사이트",
@@ -349,7 +350,7 @@ const es: Messages = {
   },
   pipeline: {
     actions: "Acciones del pipeline",
-    crawl: "Rastrear HN",
+    crawl: "Rastrear todas las fuentes",
     analyze: "Analizar lote",
     generate: "Generar oportunidades",
     completed: "{action} completado: {result}",
@@ -375,7 +376,7 @@ const es: Messages = {
   information: {
     title: "Feed de información",
     subtitle: "{total} elementos recopilados de fuentes.",
-    empty: 'Sin información. Use "Rastrear HN" en el Panel.',
+    empty: 'Sin información. Use "Rastrear todas las fuentes" en el Panel.',
     loadError: "Error al cargar el feed de información.",
     collected: "recopilado {date}",
     aiInsight: "Insight IA",
@@ -421,7 +422,7 @@ const fr: Messages = {
   },
   pipeline: {
     actions: "Actions du pipeline",
-    crawl: "Crawler HN",
+    crawl: "Crawler toutes les sources",
     analyze: "Analyser par lot",
     generate: "Générer des opportunités",
     completed: "{action} terminé : {result}",
@@ -447,7 +448,7 @@ const fr: Messages = {
   information: {
     title: "Flux d'informations",
     subtitle: "{total} éléments collectés depuis les sources.",
-    empty: 'Aucune information. Utilisez « Crawler HN » sur le tableau de bord.',
+    empty: "Aucune information. Utilisez « Crawler toutes les sources » sur le tableau de bord.",
     loadError: "Échec du chargement du flux d'informations.",
     collected: "collecté {date}",
     aiInsight: "Insight IA",
@@ -493,7 +494,7 @@ const de: Messages = {
   },
   pipeline: {
     actions: "Pipeline-Aktionen",
-    crawl: "HN crawlen",
+    crawl: "Alle Quellen crawlen",
     analyze: "Stapel analysieren",
     generate: "Chancen generieren",
     completed: "{action} abgeschlossen: {result}",
@@ -519,7 +520,7 @@ const de: Messages = {
   information: {
     title: "Informationsfeed",
     subtitle: "{total} Einträge aus Quellen gesammelt.",
-    empty: 'Keine Informationen. Nutzen Sie „HN crawlen" im Dashboard.',
+    empty: 'Keine Informationen. Nutzen Sie „Alle Quellen crawlen" im Dashboard.',
     loadError: "Informationsfeed konnte nicht geladen werden.",
     collected: "gesammelt {date}",
     aiInsight: "KI-Einblick",
@@ -565,7 +566,7 @@ const ptBR: Messages = {
   },
   pipeline: {
     actions: "Ações do pipeline",
-    crawl: "Rastrear HN",
+    crawl: "Rastrear todas as fontes",
     analyze: "Analisar lote",
     generate: "Gerar oportunidades",
     completed: "{action} concluído: {result}",
@@ -591,7 +592,7 @@ const ptBR: Messages = {
   information: {
     title: "Feed de informações",
     subtitle: "{total} itens coletados das fontes.",
-    empty: 'Sem informações. Use "Rastrear HN" no Painel.',
+    empty: 'Sem informações. Use "Rastrear todas as fontes" no Painel.',
     loadError: "Falha ao carregar o feed de informações.",
     collected: "coletado {date}",
     aiInsight: "Insight IA",

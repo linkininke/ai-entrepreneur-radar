@@ -24,6 +24,8 @@ class Analysis(Base):
     key_topics: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     relevance_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     commercial_potential: Mapped[str] = mapped_column(String(20), nullable=False, default="unknown")
+    locale: Mapped[str] = mapped_column(String(16), nullable=False, default="zh-CN")
+    translations: Mapped[dict | None] = mapped_column(JSONB)
     analyzed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

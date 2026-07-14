@@ -22,22 +22,32 @@ services:
       context: ./backend
     container_name: ai-radar-backend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql://ai_radar:change_me@postgres:5432/ai_radar}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
       LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_DEFAULT_LOCALE: ${LLM_DEFAULT_LOCALE:-zh-CN}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      LLM_REQUEST_RETRIES: ${LLM_REQUEST_RETRIES:-3}
       SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
       CRAWL_INTERVAL_MINUTES: ${CRAWL_INTERVAL_MINUTES:-60}
       PIPELINE_INTERVAL_MINUTES: ${PIPELINE_INTERVAL_MINUTES:-120}
       CRAWL_BATCH_SIZE: ${CRAWL_BATCH_SIZE:-20}
       ANALYZE_BATCH_SIZE: ${ANALYZE_BATCH_SIZE:-5}
       OPPORTUNITY_BATCH_SIZE: ${OPPORTUNITY_BATCH_SIZE:-5}
+      CRAWL_SOURCES: ${CRAWL_SOURCES:-hackernews,github,rss,producthunt}
+      GITHUB_API_TOKEN: ${GITHUB_API_TOKEN:-}
+      RSS_FEED_URLS: ${RSS_FEED_URLS:-https://techcrunch.com/feed/,https://feeds.arstechnica.com/arstechnica/technology-lab}
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./.env:/app/.env:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,6 +82,8 @@ services:
       context: ./backend
     container_name: ai-radar-worker
     restart: unless-stopped
+    env_file:
+      - .env
     command: >
       sh -c "until python -c \"import psycopg2; psycopg2.connect('${DATABASE_URL}')\" 2>/dev/null;
       do echo 'Waiting for PostgreSQL...'; sleep 2; done
@@ -83,14 +95,22 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
       LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_DEFAULT_LOCALE: ${LLM_DEFAULT_LOCALE:-zh-CN}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      LLM_REQUEST_RETRIES: ${LLM_REQUEST_RETRIES:-3}
       SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
       CRAWL_INTERVAL_MINUTES: ${CRAWL_INTERVAL_MINUTES:-60}
       PIPELINE_INTERVAL_MINUTES: ${PIPELINE_INTERVAL_MINUTES:-120}
       CRAWL_BATCH_SIZE: ${CRAWL_BATCH_SIZE:-20}
       ANALYZE_BATCH_SIZE: ${ANALYZE_BATCH_SIZE:-5}
       OPPORTUNITY_BATCH_SIZE: ${OPPORTUNITY_BATCH_SIZE:-5}
+      CRAWL_SOURCES: ${CRAWL_SOURCES:-hackernews,github,rss,producthunt}
+      GITHUB_API_TOKEN: ${GITHUB_API_TOKEN:-}
+      RSS_FEED_URLS: ${RSS_FEED_URLS:-https://techcrunch.com/feed/,https://feeds.arstechnica.com/arstechnica/technology-lab}
     volumes:
       - ./backend:/app
+      - ./.env:/app/.env:ro
     depends_on:
       postgres:
         condition: service_healthy
