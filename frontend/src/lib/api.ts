@@ -19,6 +19,21 @@ export type InformationListResponse = {
   items: InformationItem[];
 };
 
+export type AnalysisItem = {
+  id: number;
+  information_id: number;
+  summary: string;
+  key_topics: string[];
+  relevance_score: number;
+  commercial_potential: string;
+  analyzed_at: string;
+};
+
+export type AnalysisListResponse = {
+  total: number;
+  items: AnalysisItem[];
+};
+
 export async function fetchInformation(): Promise<InformationListResponse> {
   const response = await fetch(`${API_BASE}/api/information?limit=10`, {
     cache: "no-store",
@@ -26,6 +41,18 @@ export async function fetchInformation(): Promise<InformationListResponse> {
 
   if (!response.ok) {
     throw new Error("Failed to fetch information");
+  }
+
+  return response.json();
+}
+
+export async function fetchAnalysis(): Promise<AnalysisListResponse> {
+  const response = await fetch(`${API_BASE}/api/analysis?limit=10`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch analysis");
   }
 
   return response.json();

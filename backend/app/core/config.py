@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     app_env: str = "development"
     database_url: str = "postgresql://ai_radar:change_me@localhost:5432/ai_radar"
     llm_api_key: str = ""
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4o-mini"
 
 
 @lru_cache

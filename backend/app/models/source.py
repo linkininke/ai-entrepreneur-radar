@@ -1,10 +1,14 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
+
+if TYPE_CHECKING:
+    from app.models.analysis import Analysis
 
 
 class Source(Base):
@@ -46,3 +50,4 @@ class Information(Base):
     raw_data: Mapped[dict | None] = mapped_column(JSONB)
 
     source: Mapped["Source"] = relationship(back_populates="information_items")
+    analysis: Mapped["Analysis | None"] = relationship(back_populates="information", uselist=False)
